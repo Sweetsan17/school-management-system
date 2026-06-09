@@ -1,18 +1,18 @@
 from flask import jsonify, request
-
+from datetime import datetime
 from app.extensions import db
 from app.models.student import Student
 
 
 def _parse_date_of_birth(value):
     if not value:
-        return None, "joined_date is required."
+        return None, "date_of_birth is required."
     try:
         if isinstance(value, str):
             return datetime.strptime(value, "%Y-%m-%d").date(), None
         return value, None
     except ValueError:
-        return None, "joined_date must be in YYYY-MM-DD format."
+        return None, "date_of_birth must be in YYYY-MM-DD format."
 
 
 def _validate_student_payload(data, student_id=None):
