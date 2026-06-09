@@ -21,21 +21,18 @@ def _validate_student_payload(data, student_id=None):
     if not data:
         return ["Request body is required."]
 
-    # First Name Validation
     first_name = data.get("first_name")
     if not first_name or str(first_name).strip() == "":
         errors.append("first_name is required.")
     elif not str(first_name).replace(" ", "").isalpha():
         errors.append("first_name must contain only letters.")
 
-    # Last Name Validation
     last_name = data.get("last_name")
     if not last_name or str(last_name).strip() == "":
         errors.append("last_name is required.")
     elif not str(last_name).replace(" ", "").isalpha():
         errors.append("last_name must contain only letters.")
 
-    # Email Validation
     email = data.get("email")
     if not email or str(email).strip() == "":
         errors.append("email is required.")
@@ -44,13 +41,13 @@ def _validate_student_payload(data, student_id=None):
 
         q = Student.query.filter(Student.email == email)
 
+        # ✅ FIXED HERE
         if student_id:
-            q = q.filter(Student.id != student_id)
+            q = q.filter(Student.student_id != student_id)
 
         if q.first():
             errors.append("Email address already exists.")
 
-    # Date of Birth Validation
     date_of_birth = data.get("date_of_birth")
 
     if not date_of_birth or str(date_of_birth).strip() == "":
@@ -108,7 +105,7 @@ def create_student():
         return (
             jsonify(
                 {
-                    "error": "An internal server error occurred.",
+                    "error": "Internal server error",
                     "details": str(e),
                 }
             ),
@@ -118,8 +115,7 @@ def create_student():
 
 def get_students():
     students = Student.query.all()
-
-    return jsonify({"students": [student.to_dict() for student in students]}), 200
+    return jsonify({"students": [s.to_dict() for s in students]}), 200
 
 
 def get_student(student_id):
@@ -142,10 +138,7 @@ def update_student(student_id):
     if not data:
         return jsonify({"error": "No data provided to update."}), 400
 
-    errors = _validate_student_payload(
-        data,
-        student_id=student_id,
-    )
+    errors = _validate_student_payload(data, student_id)
 
     if errors:
         return jsonify({"errors": errors}), 400
@@ -178,7 +171,7 @@ def update_student(student_id):
         return (
             jsonify(
                 {
-                    "error": "An internal server error occurred.",
+                    "error": "Internal server error",
                     "details": str(e),
                 }
             ),
@@ -200,11 +193,10 @@ def delete_student(student_id):
 
     except Exception as e:
         db.session.rollback()
-
         return (
             jsonify(
                 {
-                    "error": "An internal server error occurred.",
+                    "error": "Internal server error",
                     "details": str(e),
                 }
             ),
