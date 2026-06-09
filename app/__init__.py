@@ -11,7 +11,7 @@ def create_app():
     app.config.from_object(Config)
     db.init_app(app)
 
-    # from app.models import Course, Student  # noqa: F401
+    from app.models import student  # noqa: F401
 
     register_blueprints(app)
 
