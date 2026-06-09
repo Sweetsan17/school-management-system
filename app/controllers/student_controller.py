@@ -41,7 +41,6 @@ def _validate_student_payload(data, student_id=None):
 
         q = Student.query.filter(Student.email == email)
 
-        # ✅ FIXED HERE
         if student_id:
             q = q.filter(Student.student_id != student_id)
 
