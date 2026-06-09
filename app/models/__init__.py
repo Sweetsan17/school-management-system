@@ -1,4 +1,5 @@
 from app.models.student import Student
 from app.models.lecture import Lecture
+from app.models.course import Course
 
-__all__ = ["Student", "Lecture"]
+__all__ = ["Student", "Lecture", "Course"]
