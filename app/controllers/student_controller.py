@@ -1,5 +1,5 @@
 from flask import jsonify, request
-from datetime import datetime
+from datetime import datetime, date
 from app.extensions import db
 from app.models.student import Student
 
@@ -7,54 +7,78 @@ from app.models.student import Student
 def _parse_date_of_birth(value):
     if not value:
         return None, "date_of_birth is required."
+
     try:
-        if isinstance(value, str):
-            return datetime.strptime(value, "%Y-%m-%d").date(), None
-        return value, None
+        dob = datetime.strptime(str(value), "%Y-%m-%d").date()
+        return dob, None
     except ValueError:
         return None, "date_of_birth must be in YYYY-MM-DD format."
 
 
 def _validate_student_payload(data, student_id=None):
     errors = []
+
     if not data:
         return ["Request body is required."]
 
+    # First Name Validation
     first_name = data.get("first_name")
-    if first_name is None or str(first_name).strip() == "":
-        errors.append("first_name must contain only letter")
+    if not first_name or str(first_name).strip() == "":
+        errors.append("first_name is required.")
+    elif not str(first_name).replace(" ", "").isalpha():
+        errors.append("first_name must contain only letters.")
 
+    # Last Name Validation
     last_name = data.get("last_name")
-    if last_name is None or str(last_name).strip() == "":
-        errors.append("last_name must contain only letter")
+    if not last_name or str(last_name).strip() == "":
+        errors.append("last_name is required.")
+    elif not str(last_name).replace(" ", "").isalpha():
+        errors.append("last_name must contain only letters.")
 
+    # Email Validation
     email = data.get("email")
-    if email is None or str(email).strip() == "":
-        errors.append("please enter the vaild email address")
-    elif str(email).strip():
-        q = Student.query.filter(Student.email == str(email).strip())
+    if not email or str(email).strip() == "":
+        errors.append("email is required.")
+    else:
+        email = str(email).strip()
+
+        q = Student.query.filter(Student.email == email)
+
         if student_id:
             q = q.filter(Student.id != student_id)
+
         if q.first():
             errors.append("Email address already exists.")
 
-    date_of_birth_raw = data.get("date_of_birth")
-    if date_of_birth_raw is None or str(date_of_birth_raw).strip() == "":
-        errors.append("date_of_birth cannot be a future date.")
+    # Date of Birth Validation
+    date_of_birth = data.get("date_of_birth")
+
+    if not date_of_birth or str(date_of_birth).strip() == "":
+        errors.append("date_of_birth is required.")
+    else:
+        dob, dob_error = _parse_date_of_birth(date_of_birth)
+
+        if dob_error:
+            errors.append(dob_error)
+        elif dob > date.today():
+            errors.append("date_of_birth cannot be a future date.")
 
     return errors
 
 
 def create_student():
     data = request.get_json(silent=True)
+
     if not data:
         return jsonify({"error": "Request body is required."}), 400
 
     errors = _validate_student_payload(data)
+
     if errors:
         return jsonify({"errors": errors}), 400
 
-    date_of_birth, date_err = _parse_date_of_birth(data.get("date_of_birth_raw"))
+    date_of_birth, date_err = _parse_date_of_birth(data.get("date_of_birth"))
+
     if date_err:
         return jsonify({"error": date_err}), 400
 
@@ -65,8 +89,10 @@ def create_student():
             email=data.get("email").strip(),
             date_of_birth=date_of_birth,
         )
+
         db.session.add(student)
         db.session.commit()
+
         return (
             jsonify(
                 {
@@ -76,37 +102,56 @@ def create_student():
             ),
             201,
         )
-    except Exception:
+
+    except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "An internal server error occurred."}), 500
+        return (
+            jsonify(
+                {
+                    "error": "An internal server error occurred.",
+                    "details": str(e),
+                }
+            ),
+            500,
+        )
 
 
 def get_students():
     students = Student.query.all()
-    return jsonify({"students": [s.to_dict() for s in students]}), 200
+
+    return jsonify({"students": [student.to_dict() for student in students]}), 200
 
 
 def get_student(student_id):
     student = Student.query.get(student_id)
+
     if not student:
         return jsonify({"error": "Student not found."}), 404
+
     return jsonify({"student": student.to_dict()}), 200
 
 
 def update_student(student_id):
     student = Student.query.get(student_id)
+
     if not student:
         return jsonify({"error": "Student not found."}), 404
 
     data = request.get_json(silent=True)
+
     if not data:
         return jsonify({"error": "No data provided to update."}), 400
 
-    errors = _validate_student_payload(data, student_id=student_id)
+    errors = _validate_student_payload(
+        data,
+        student_id=student_id,
+    )
+
     if errors:
         return jsonify({"errors": errors}), 400
 
     date_of_birth, date_err = _parse_date_of_birth(data.get("date_of_birth"))
+
     if date_err:
         return jsonify({"error": date_err}), 400
 
@@ -115,7 +160,9 @@ def update_student(student_id):
         student.last_name = data.get("last_name").strip()
         student.email = data.get("email").strip()
         student.date_of_birth = date_of_birth
+
         db.session.commit()
+
         return (
             jsonify(
                 {
@@ -125,19 +172,41 @@ def update_student(student_id):
             ),
             200,
         )
-    except Exception:
+
+    except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "An internal server error occurred."}), 500
+        return (
+            jsonify(
+                {
+                    "error": "An internal server error occurred.",
+                    "details": str(e),
+                }
+            ),
+            500,
+        )
 
 
 def delete_student(student_id):
     student = Student.query.get(student_id)
+
     if not student:
         return jsonify({"error": "Student not found."}), 404
+
     try:
         db.session.delete(student)
         db.session.commit()
+
         return jsonify({"message": "Student deleted successfully."}), 200
-    except Exception:
+
+    except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "An internal server error occurred."}), 500
+
+        return (
+            jsonify(
+                {
+                    "error": "An internal server error occurred.",
+                    "details": str(e),
+                }
+            ),
+            500,
+        )
