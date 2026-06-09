@@ -8,8 +8,8 @@ class Course(db.Model):
     course_code = db.Column(db.String(20), nullable=False, unique=True)
     course_name = db.Column(db.String(100), nullable=False)
     credits = db.Column(db.Integer, nullable=False)
-    lecturer_id = db.Column(
-        db.Integer, db.ForeignKey("lecturers.lecturer_id"), nullable=False
+    lecture_id = db.Column(
+        db.Integer, db.ForeignKey("lectures.lecture_id"), nullable=False
     )
 
     def to_dict(self):
@@ -18,5 +18,5 @@ class Course(db.Model):
             "course_code": self.course_code,
             "course_name": self.course_name,
             "credits": self.credits,
-            "lecturer_id": self.lecturer_id,
+            "lecture_id": self.lecture_id,
         }
