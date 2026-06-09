@@ -4,7 +4,7 @@ from app.extensions import db
 class Enrollment(db.Model):
     __tablename__ = "enrollments"
 
-    enrollent_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    enrollment_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     student_id = db.Column(
         db.Integer, db.ForeignKey("students.student_id"), nullable=False
     )
@@ -16,7 +16,7 @@ class Enrollment(db.Model):
 
     def to_dict(self):
         return {
-            "enrollent_id": self.enrollent_id,
+            "enrollment_id": self.enrollment_id,
             "student_id": self.student_id,
             "course_id": self.course_id,
             "status": self.status,
