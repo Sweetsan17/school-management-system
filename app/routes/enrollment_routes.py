@@ -11,13 +11,13 @@ def create_enrollment():
 
 
 @enrollment_bp.route("", methods=["GET"])
-def get_enrollment():
-    return ctrl.get_enrollment()
+def get_enrollments():
+    return ctrl.get_enrollments()
 
 
 @enrollment_bp.route("/<int:enrollment_id>", methods=["GET"])
-def get_enrollments(enrollment_id):
-    return ctrl.get_enrollments(enrollment_id)
+def get_enrollment(enrollment_id):
+    return ctrl.get_enrollment(enrollment_id)
 
 
 @enrollment_bp.route("/<int:enrollment_id>", methods=["PUT"])
