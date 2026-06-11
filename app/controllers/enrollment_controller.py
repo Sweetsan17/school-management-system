@@ -17,22 +17,20 @@ def _validate_enrollment_payload(data, enrollment_id=None):
         errors.append("student_id is required.")
     else:
         try:
-            student_id_val = int(student_id)
-            if not Student.query.get(student_id_val):
+            if not Student.query.get(int(student_id)):
                 errors.append("Invalid student selected.")
         except (ValueError, TypeError):
-            errors.append("Invalid student selected.")
+            errors.append("student_id must be a valid integer.")
 
     course_id = data.get("course_id")
     if course_id is None:
         errors.append("course_id is required.")
     else:
         try:
-            course_id_val = int(course_id)
-            if not Course.query.get(course_id_val):
+            if not Course.query.get(int(course_id)):
                 errors.append("Invalid course selected.")
         except (ValueError, TypeError):
-            errors.append("Invalid course selected.")
+            errors.append("course_id must be a valid integer.")
 
     enrollment_date = data.get("enrollment_date")
     if not enrollment_date:
@@ -41,15 +39,13 @@ def _validate_enrollment_payload(data, enrollment_id=None):
         try:
             datetime.strptime(str(enrollment_date), "%Y-%m-%d")
         except ValueError:
-            errors.append("Enrollment date is required.")
+            errors.append("Enrollment date must be in YYYY-MM-DD format.")
 
     status = data.get("status")
-    if not status or str(status).strip() == "":
+    if status is None:
         errors.append("status is required.")
-    else:
-        status_val = str(status).strip()
-        if status_val not in ["Active", "Completed", "Dropped"]:
-            errors.append("Invalid enrollment status.")
+    elif str(status).strip() not in Enrollment.VALID_STATUSES:
+        errors.append(f"Status must be one of: {', '.join(Enrollment.VALID_STATUSES)}.")
 
     return errors
 
