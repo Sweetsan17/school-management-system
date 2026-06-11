@@ -4,6 +4,8 @@ from app.extensions import db
 class Enrollment(db.Model):
     __tablename__ = "enrollments"
 
+    VALID_STATUSES = ["Active", "Completed", "Dropped"]
+
     enrollment_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     student_id = db.Column(
         db.Integer, db.ForeignKey("students.student_id"), nullable=False
@@ -11,7 +13,7 @@ class Enrollment(db.Model):
     course_id = db.Column(
         db.Integer, db.ForeignKey("courses.course_id"), nullable=False
     )
-    status = db.Column(db.Boolean, default=True, nullable=False)
+    status = db.Column(db.String(20), default="Active", nullable=False)
     enrollment_date = db.Column(db.Date, nullable=False)
 
     def to_dict(self):
@@ -20,5 +22,5 @@ class Enrollment(db.Model):
             "student_id": self.student_id,
             "course_id": self.course_id,
             "status": self.status,
-            "enrollment_date": self.enrollment_date,
+            "enrollment_date": str(self.enrollment_date),
         }
